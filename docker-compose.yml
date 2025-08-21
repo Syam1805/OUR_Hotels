@@ -1,5 +1,4 @@
-version: "3.8"
-
+# docker-compose.yml  (only the backend build path changed)
 services:
   mysql:
     image: mysql:8
@@ -14,7 +13,7 @@ services:
       - mysql_data:/var/lib/mysql
 
   backend:
-    build: ./yoyo
+    build: ./YOYO        # <- use the real folder name
     container_name: yoyo_backend
     restart: always
     depends_on:
