@@ -1,0 +1,19 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Add this to your global CSS file */
+body.sidebar-open {
+  margin-left: 16rem;
+  transition: margin-left 0.3s ease;
+}
+
+body {
+  transition: margin-left 0.3s ease;
+}
+
+/* In your index.css or global CSS file */
+.main-content > *:last-child {
+  margin-bottom: 0;
+}

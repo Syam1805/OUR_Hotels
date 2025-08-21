@@ -1,0 +1,15 @@
+# root
+.DS_Store
+.env
+*.log
+
+# backend
+/yoyo/target
+/yoyo/.idea
+/yoyo/.settings
+/yoyo/.classpath
+/yoyo/.project
+
+# frontend
+/yoyo_frontend/node_modules
+/yoyo_frontend/build
