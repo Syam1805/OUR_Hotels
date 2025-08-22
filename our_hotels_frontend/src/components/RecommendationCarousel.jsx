@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaStar, FaMapMarkerAlt, FaBed, FaBath, FaWifi, FaCar, FaUtensils, FaSwimmingPool } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -109,6 +110,8 @@ const amenityIcons = {
 };
 
 function RecommendationCarousel() {
+  const navigate = useNavigate();
+  
   const settings = {
     dots: true,
     infinite: true,
@@ -219,10 +222,10 @@ function RecommendationCarousel() {
                   whileTap={{ scale: 0.98 }}
                 >
                   <button 
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
-                    onClick={() => alert(`Viewing details for ${hotel.name}`)}
+                    className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+                    onClick={() => navigate('/hotels')}
                   >
-                    View Details
+                    Book Yours
                   </button>
                 </motion.div>
               </motion.div>

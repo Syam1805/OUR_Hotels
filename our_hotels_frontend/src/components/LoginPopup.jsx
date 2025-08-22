@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 /**
@@ -12,6 +13,7 @@ import PropTypes from 'prop-types';
  */
 function LoginPopup({ onClose, onSwitchToSignup }) {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ 
     email: '', 
     password: '',
@@ -21,7 +23,7 @@ function LoginPopup({ onClose, onSwitchToSignup }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const emailInputRef = useRef(null);
-
+  
   // Focus email input when component mounts
   useEffect(() => {
     if (emailInputRef.current) {
@@ -81,6 +83,17 @@ function LoginPopup({ onClose, onSwitchToSignup }) {
     console.log('Forgot password clicked');
   };
 
+  const handleSwitchToSignup = () => {
+    // If there's a custom onSwitchToSignup prop, use it
+    if (onSwitchToSignup) {
+      onSwitchToSignup();
+    } else {
+      // Default behavior: navigate to register page
+      onClose(); // Close the login popup first
+      navigate('/register'); // Navigate to Register.jsx page
+    }
+  };
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
@@ -104,7 +117,6 @@ function LoginPopup({ onClose, onSwitchToSignup }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-
         <h2 id="login-title" className="text-2xl font-bold mb-6 text-gray-800">Welcome Back</h2>
         
         {error && (
@@ -226,19 +238,17 @@ function LoginPopup({ onClose, onSwitchToSignup }) {
           </div>
         </form>
         
-        {onSwitchToSignup && (
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <button 
-                onClick={onSwitchToSignup}
-                className="text-red-600 hover:text-red-800 font-medium transition-colors"
-              >
-                Sign up
-              </button>
-            </p>
-          </div>
-        )}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <button 
+              onClick={handleSwitchToSignup}
+              className="text-red-600 hover:text-red-800 font-medium transition-colors"
+            >
+             Sign up
+            </button>
+          </p>
+        </div>
       </motion.div>
     </div>
   );

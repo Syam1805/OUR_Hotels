@@ -3,17 +3,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { searchHotels } from '../api/api.js';
 import Loader from '../components/Loader';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaMapMarkerAlt, FaStar, FaBed, FaMoneyBillWave, FaImage, FaFilter, FaArrowLeft, FaChevronLeft, FaChevronRight, FaHeart, FaTimes, FaWifi, FaSwimmingPool, FaParking, FaUtensils, FaDumbbell, FaSpa, FaCar, FaCoffee, FaConciergeBell } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaStar, FaBed, FaMoneyBillWave, FaImage, FaFilter, FaArrowLeft, FaChevronLeft, FaChevronRight, FaHeart, FaTimes, FaWifi, FaSwimmingPool, FaParking, FaUtensils, FaDumbbell, FaSpa, FaCar, FaCoffee, FaConciergeBell, FaSearch } from 'react-icons/fa';
 import { useTheme } from '@mui/material/styles';
-import { Button, TextField, Select, MenuItem, FormControl, InputLabel, Box, Typography, IconButton, Chip, Badge, Tooltip } from '@mui/material';
+import { Button, TextField, Select, MenuItem, FormControl, InputLabel, Box, Typography, IconButton, Chip, Badge, Tooltip, InputAdornment } from '@mui/material';
 import { useWishlist } from '../context/WishlistContext';
 import { FiSliders, FiArrowLeft } from 'react-icons/fi';
 
+// Animation variants remain unchanged
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
-
 const sidebarVariants = {
   hidden: { x: '-100%', opacity: 0 },
   visible: { 
@@ -28,7 +28,6 @@ const sidebarVariants = {
     } 
   },
 };
-
 const cardVariants = {
   hidden: { opacity: 0, y: 50, scale: 0.9 },
   visible: { 
@@ -43,7 +42,6 @@ const cardVariants = {
     } 
   },
 };
-
 const cardHover = {
   hover: {
     scale: 1.03,
@@ -52,7 +50,6 @@ const cardHover = {
     transition: { duration: 0.3, ease: "easeOut" }
   },
 };
-
 const imageVariants = {
   hidden: { opacity: 0, scale: 0.9 },
   visible: { 
@@ -72,7 +69,6 @@ const imageVariants = {
     } 
   },
 };
-
 const amenityIcons = {
   wifi: <FaWifi className="text-blue-500" />,
   pool: <FaSwimmingPool className="text-blue-400" />,
@@ -92,7 +88,10 @@ function Hotels({ isMainSidebarOpen }) {
   const queryParams = new URLSearchParams(location.search);
   const initialLocation = queryParams.get('location') || '';
   const sortBy = queryParams.get('sortBy') || '';
-  const [searchLocation, setSearchLocation] = useState(initialLocation);
+  
+  // State for search functionality
+  const [searchTerm, setSearchTerm] = useState(initialLocation);
+  const [allHotels, setAllHotels] = useState([]);
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -107,16 +106,14 @@ function Hotels({ isMainSidebarOpen }) {
     amenities: []
   });
   
-  // Check if sidebar is open by listening to body class
+  // Check if sidebar is open
   useEffect(() => {
     const checkSidebar = () => {
       setSidebarOpen(document.body.classList.contains('sidebar-open'));
     };
     
-    // Initial check
     checkSidebar();
     
-    // Set up a MutationObserver to watch for changes to the body class
     const observer = new MutationObserver(checkSidebar);
     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     
@@ -125,13 +122,80 @@ function Hotels({ isMainSidebarOpen }) {
     };
   }, []);
   
+  // Initial data fetch
   useEffect(() => {
     fetchHotels();
-  }, [searchLocation, filters]);
+  }, []);
+  
+  // Client-side filtering and sorting
+  useEffect(() => {
+    if (allHotels.length === 0) return;
+    
+    let filteredData = [...allHotels];
+    
+    // Apply search term filter
+    if (searchTerm.trim() !== '') {
+      const term = searchTerm.toLowerCase().trim();
+      filteredData = filteredData.filter(hotel => 
+        hotel.name.toLowerCase().includes(term) || 
+        hotel.location.toLowerCase().includes(term)
+      );
+    }
+    
+    // Apply room type filter
+    if (filters.roomType) {
+      filteredData = filteredData.filter(hotel => 
+        hotel.roomType && hotel.roomType.toLowerCase() === filters.roomType.toLowerCase()
+      );
+    }
+    
+    // Apply price range filter
+    if (filters.priceMin) {
+      const minPrice = parseFloat(filters.priceMin);
+      if (!isNaN(minPrice)) {
+        filteredData = filteredData.filter(hotel => 
+          parseFloat(hotel.price) >= minPrice
+        );
+      }
+    }
+    if (filters.priceMax) {
+      const maxPrice = parseFloat(filters.priceMax);
+      if (!isNaN(maxPrice)) {
+        filteredData = filteredData.filter(hotel => 
+          parseFloat(hotel.price) <= maxPrice
+        );
+      }
+    }
+    
+    // Apply amenities filter
+    if (filters.amenities.length > 0) {
+      filteredData = filteredData.filter(hotel => 
+        hotel.amenities && filters.amenities.every(amenity => 
+          hotel.amenities.includes(amenity)
+        )
+      );
+    }
+    
+    // Apply sorting
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (filters.sortBy === 'rating') {
+        return b.rating - a.rating;
+      }
+      if (filters.sortBy === 'priceLow') {
+        return parseFloat(a.price) - parseFloat(b.price);
+      }
+      if (filters.sortBy === 'priceHigh') {
+        return parseFloat(b.price) - parseFloat(a.price);
+      }
+      return 0;
+    });
+    
+    setHotels(sortedData);
+  }, [allHotels, searchTerm, filters]);
   
   const fetchHotels = () => {
     setLoading(true);
-    searchHotels(searchLocation, filters.priceMin, filters.priceMax, filters.roomType, filters.sortBy)
+    searchHotels('', filters.priceMin, filters.priceMax, filters.roomType, filters.sortBy)
       .then((data) => {
         const processedData = data.map(hotel => {
           // Process images - handle both base64 and URL images
@@ -195,31 +259,18 @@ function Hotels({ isMainSidebarOpen }) {
           };
         });
         
-        const sortedData = [...processedData].sort((a, b) => {
-          if (filters.sortBy === 'rating') {
-            return b.rating - a.rating;
-          }
-          if (filters.sortBy === 'priceLow') {
-            return a.price - b.price;
-          }
-          if (filters.sortBy === 'priceHigh') {
-            return b.price - a.price;
-          }
-          return 0;
-        });
-        
-        setHotels(sortedData);
+        setAllHotels(processedData);
       })
       .catch((error) => {
         console.error('Error fetching hotels:', error);
-        setHotels([]);
+        setAllHotels([]);
       })
       .finally(() => setLoading(false));
   };
   
-  const handleSearch = () => {
-    setShowFilters(false);
+  const handleApplyFilters = () => {
     fetchHotels();
+    setShowFilters(false);
   };
   
   const clearFilters = () => {
@@ -230,7 +281,8 @@ function Hotels({ isMainSidebarOpen }) {
       sortBy: '',
       amenities: []
     });
-    setSearchLocation('');
+    setSearchTerm('');
+    fetchHotels();
     setShowFilters(false);
   };
   
@@ -249,7 +301,7 @@ function Hotels({ isMainSidebarOpen }) {
   };
   
   const handleImageError = (hotelId) => {
-    setHotels(prevHotels =>
+    setAllHotels(prevHotels =>
       prevHotels.map(hotel => {
         if (hotel.hotelId === hotelId) {
           const fallbackImage = `https://source.unsplash.com/400x300/?hotel,${hotel.name}`;
@@ -292,36 +344,45 @@ function Hotels({ isMainSidebarOpen }) {
   
   const totalOffset = showFilters ? 'translate-x-64' : '';
   
-  // Style for transparent form controls
-  const transparentInputStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  // Style for filter bar
+  const filterBarStyle = {
+    backgroundColor: 'rgba(30, 64, 124, 0.9)',
     backdropFilter: 'blur(10px)',
+    borderRadius: '16px',
+    padding: '16px',
+    marginBottom: '24px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+  };
+  
+  // Style for filter inputs
+  const filterInputStyle = {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: '12px',
     '& .MuiOutlinedInput-root': {
       '& fieldset': {
-        borderColor: 'rgba(255, 255, 255, 0.3)',
+        borderColor: 'rgba(30, 64, 124, 0.3)',
       },
       '&:hover fieldset': {
-        borderColor: 'rgba(255, 255, 255, 0.5)',
+        borderColor: 'rgba(30, 64, 124, 0.5)',
       },
       '&.Mui-focused fieldset': {
         borderColor: theme.palette.primary.main,
       },
     },
     '& .MuiInputLabel-root': {
-      color: 'rgba(255, 255, 255, 0.8)',
+      color: 'rgba(30, 64, 124, 0.8)',
     },
     '& .MuiInputLabel-root.Mui-focused': {
       color: theme.palette.primary.main,
     },
     '& .MuiOutlinedInput-input': {
-      color: 'white',
+      color: 'rgba(30, 64, 124, 0.9)',
     },
     '& .MuiSelect-select': {
-      color: 'white',
+      color: 'rgba(30, 64, 124, 0.9)',
     },
     '& .MuiSvgIcon-root': {
-      color: 'rgba(255, 255, 255, 0.8)',
+      color: 'rgba(30, 64, 124, 0.8)',
     },
   };
   
@@ -363,7 +424,7 @@ function Hotels({ isMainSidebarOpen }) {
             animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
           >
             <IconButton 
-              onClick={() => setShowFilters(true)} 
+              onClick={() => setShowFilters(!showFilters)} 
               className="hover:text-primary-dark transition-colors duration-300"
               style={{ color: theme.palette.primary.main }}
             >
@@ -371,6 +432,100 @@ function Hotels({ isMainSidebarOpen }) {
             </IconButton>
           </motion.div>
         </div>
+        
+        {/* Filter Bar at the Top */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          style={filterBarStyle}
+        >
+          <div className="flex flex-wrap justify-between items-center gap-4">
+            {/* Left side - Search */}
+            <div className="flex gap-2 items-center">
+              <TextField
+                label="Search"
+                variant="outlined"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size="small"
+                sx={{ ...filterInputStyle, minWidth: '200px' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <FaSearch style={{ color: 'rgba(30, 64, 124, 0.7)' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                sx={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  backdropFilter: 'blur(10px)',
+                  color: 'white',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                  }
+                }}
+              >
+                Search
+              </Button>
+            </div>
+            
+            {/* Right side filters */}
+            <div className="flex flex-wrap gap-4 items-center">
+              {/* Room Type */}
+              <FormControl size="small" sx={{ ...filterInputStyle, minWidth: '150px' }}>
+                <InputLabel>Room Type</InputLabel>
+                <Select
+                  value={filters.roomType}
+                  label="Room Type"
+                  onChange={(e) => setFilters({...filters, roomType: e.target.value})}
+                >
+                  <MenuItem value="">All Types</MenuItem>
+                  <MenuItem value="Single">Single</MenuItem>
+                  <MenuItem value="Double">Double</MenuItem>
+                  <MenuItem value="Suite">Suite</MenuItem>
+                </Select>
+              </FormControl>
+              
+              {/* Sort By */}
+              <FormControl size="small" sx={{ ...filterInputStyle, minWidth: '150px' }}>
+                <InputLabel>Sort By</InputLabel>
+                <Select
+                  value={filters.sortBy}
+                  label="Sort By"
+                  onChange={(e) => setFilters({...filters, sortBy: e.target.value})}
+                >
+                  <MenuItem value="">Default</MenuItem>
+                  <MenuItem value="rating">Rating (High to Low)</MenuItem>
+                  <MenuItem value="priceLow">Price (Low to High)</MenuItem>
+                  <MenuItem value="priceHigh">Price (High to Low)</MenuItem>
+                </Select>
+              </FormControl>
+              
+              {/* Clear Filters Button */}
+              <Button
+                variant="outlined"
+                onClick={clearFilters}
+                size="small"
+                sx={{ 
+                  color: 'white', 
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  }
+                }}
+              >
+                Clear Filters
+              </Button>
+            </div>
+          </div>
+        </motion.div>
         
         <AnimatePresence>
           {showFilters && (
@@ -397,13 +552,13 @@ function Hotels({ isMainSidebarOpen }) {
                   animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
                 >
                   <TextField
-                    label="Location"
+                    label="Search Term"
                     variant="outlined"
                     fullWidth
-                    value={searchLocation}
-                    onChange={(e) => setSearchLocation(e.target.value)}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     size="small"
-                    sx={transparentInputStyle}
+                    sx={filterInputStyle}
                   />
                 </motion.div>
                 
@@ -419,7 +574,7 @@ function Hotels({ isMainSidebarOpen }) {
                     value={filters.priceMin}
                     onChange={(e) => setFilters({...filters, priceMin: e.target.value})}
                     size="small"
-                    sx={transparentInputStyle}
+                    sx={filterInputStyle}
                   />
                 </motion.div>
                 
@@ -435,7 +590,7 @@ function Hotels({ isMainSidebarOpen }) {
                     value={filters.priceMax}
                     onChange={(e) => setFilters({...filters, priceMax: e.target.value})}
                     size="small"
-                    sx={transparentInputStyle}
+                    sx={filterInputStyle}
                   />
                 </motion.div>
                 
@@ -443,7 +598,7 @@ function Hotels({ isMainSidebarOpen }) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0, transition: { delay: 0.4 } }}
                 >
-                  <FormControl fullWidth size="small" sx={transparentInputStyle}>
+                  <FormControl fullWidth size="small" sx={filterInputStyle}>
                     <InputLabel>Room Type</InputLabel>
                     <Select
                       value={filters.roomType}
@@ -462,7 +617,7 @@ function Hotels({ isMainSidebarOpen }) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0, transition: { delay: 0.5 } }}
                 >
-                  <FormControl fullWidth size="small" sx={transparentInputStyle}>
+                  <FormControl fullWidth size="small" sx={filterInputStyle}>
                     <InputLabel>Sort By</InputLabel>
                     <Select
                       value={filters.sortBy}
@@ -514,7 +669,7 @@ function Hotels({ isMainSidebarOpen }) {
                 >
                   <Button
                     variant="contained"
-                    onClick={handleSearch}
+                    onClick={handleApplyFilters}
                     fullWidth
                     className="py-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300"
                     style={{ 
@@ -731,7 +886,7 @@ function Hotels({ isMainSidebarOpen }) {
                                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
                               }}
                             >
-                              View Details
+                              Book Now
                             </Button>
                           </motion.div>
                         </div>
@@ -747,5 +902,4 @@ function Hotels({ isMainSidebarOpen }) {
     </motion.div>
   );
 }
-
 export default Hotels;

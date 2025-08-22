@@ -1,4 +1,3 @@
-# docker-compose.yml  (only the backend build path changed)
 services:
   mysql:
     image: mysql:8
@@ -12,9 +11,9 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
-  backend:
-    build: ./YOYO        # <- use the real folder name
-    container_name: yoyo_backend
+  our_hotels_backend:
+    build: ./our_hotels_backend     # <- renamed folder
+    container_name: our_hotels_backend
     restart: always
     depends_on:
       - mysql
@@ -26,12 +25,12 @@ services:
     ports:
       - "1805:1805"
 
-  frontend:
-    build: ./yoyo_frontend
-    container_name: yoyo_frontend
+  our_hotels_frontend:
+    build: ./our_hotels_frontend    # <- renamed folder
+    container_name: our_hotels_frontend
     restart: always
     depends_on:
-      - backend
+      - our_hotels_backend
     ports:
       - "3000:80"
 

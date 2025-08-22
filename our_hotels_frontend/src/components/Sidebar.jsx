@@ -75,6 +75,16 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
   const navigate = useNavigate();
   const theme = useTheme();
   
+  // Define icons with dark blue color
+  const homeIcon = <FaHome style={{ color: '#1a237e' }} />;
+  const hotelIcon = <FaHotel style={{ color: '#1a237e' }} />;
+  const historyIcon = <FaHistory style={{ color: '#1a237e' }} />;
+  const userIcon = <FaUser style={{ color: '#1a237e' }} />;
+  const heartIcon = <FaHeart style={{ color: '#1a237e' }} />;
+  const cogIcon = <FaCog style={{ color: '#1a237e' }} />;
+  const timesIcon = <FaTimes style={{ color: '#1a237e' }} />;
+  const signOutIcon = <FaSignOutAlt style={{ color: '#d32f2f' }} />;
+  
   // Notify parent component about sidebar state changes
   useEffect(() => {
     if (onSidebarStateChange) {
@@ -141,9 +151,10 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
         >
           <Typography 
             variant="h6" 
-            className="font-bold bg-gradient-to-r from-Red-600 to-red"
+            className="font-bold bg-gradient-to-r from-blue-600 to-white-800"
+            style={{ color: '#1a237e' }}
           >
-            YoYo Hotels
+            OUR Hotels
           </Typography>
         </motion.div>
         <motion.div variants={itemVariants}>
@@ -151,7 +162,7 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
             onClick={onClose} 
             className="p-2 rounded-full hover:bg-blue-50 transition-colors duration-300"
           >
-            <FaTimes style={{ color: theme.palette.primary.main }} />
+            {timesIcon}
           </Button>
         </motion.div>
       </div>
@@ -166,7 +177,7 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
               sx={{ 
                 width: 56, 
                 height: 56,
-                bgcolor: theme.palette.primary.main,
+                bgcolor: '#1a237e',
                 color: 'white',
                 fontWeight: 'bold',
                 boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
@@ -179,14 +190,14 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
             <Typography 
               variant="body1" 
               className="font-semibold"
-              style={{ color: theme.palette.primary.dark }}
+              style={{ color: '#1a237e' }}
             >
               {getUserDisplayName()}
             </Typography>
             <Typography 
               variant="body2" 
               className="text-sm"
-              style={{ color: theme.palette.primary.main }}
+              style={{ color: '#1a237e' }}
             >
               {user.email || 'No email provided'}
             </Typography>
@@ -198,11 +209,11 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
         <motion.div variants={itemVariants}>
           <Button
             fullWidth
-            startIcon={<FaHome style={{ color: theme.palette.primary.main }} />}
+            startIcon={homeIcon}
             onClick={() => handleNavigation('/')}
             className="justify-start p-3 mb-2 rounded-lg hover:bg-blue-50 transition-colors duration-300"
             style={{ 
-              color: theme.palette.primary.dark,
+              color: '#1a237e',
               justifyContent: 'flex-start',
               textAlign: 'left'
             }}
@@ -214,11 +225,11 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
         <motion.div variants={itemVariants}>
           <Button
             fullWidth
-            startIcon={<FaHotel style={{ color: theme.palette.primary.main }} />}
+            startIcon={hotelIcon}
             onClick={() => handleNavigation('/hotels')}
             className="justify-start p-3 mb-2 rounded-lg hover:bg-blue-50 transition-colors duration-300"
             style={{ 
-              color: theme.palette.primary.dark,
+              color: '#1a237e',
               justifyContent: 'flex-start',
               textAlign: 'left'
             }}
@@ -232,11 +243,11 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
             <motion.div variants={itemVariants}>
               <Button
                 fullWidth
-                startIcon={<FaHistory style={{ color: theme.palette.primary.main }} />}
+                startIcon={historyIcon}
                 onClick={() => handleNavigation('/order-history')}
                 className="justify-start p-3 mb-2 rounded-lg hover:bg-blue-50 transition-colors duration-300"
                 style={{ 
-                  color: theme.palette.primary.dark,
+                  color: '#1a237e',
                   justifyContent: 'flex-start',
                   textAlign: 'left'
                 }}
@@ -248,11 +259,11 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
             <motion.div variants={itemVariants}>
               <Button
                 fullWidth
-                startIcon={<FaUser style={{ color: theme.palette.primary.main }} />}
+                startIcon={userIcon}
                 onClick={() => handleNavigation('/profile')}
                 className="justify-start p-3 mb-2 rounded-lg hover:bg-blue-50 transition-colors duration-300"
                 style={{ 
-                  color: theme.palette.primary.dark,
+                  color: '#1a237e',
                   justifyContent: 'flex-start',
                   textAlign: 'left'
                 }}
@@ -264,11 +275,11 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
             <motion.div variants={itemVariants}>
               <Button
                 fullWidth
-                startIcon={<FaHeart style={{ color: theme.palette.primary.main }} />}
+                startIcon={heartIcon}
                 onClick={() => handleNavigation('/wishlist')}
                 className="justify-start p-3 mb-2 rounded-lg hover:bg-blue-50 transition-colors duration-300"
                 style={{ 
-                  color: theme.palette.primary.dark,
+                  color: '#1a237e',
                   justifyContent: 'flex-start',
                   textAlign: 'left'
                 }}
@@ -283,11 +294,11 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
           <motion.div variants={itemVariants}>
             <Button
               fullWidth
-              startIcon={<FaCog style={{ color: theme.palette.primary.main }} />}
+              startIcon={cogIcon}
               onClick={() => handleNavigation('/admin')}
               className="justify-start p-3 mb-2 rounded-lg hover:bg-blue-50 transition-colors duration-300"
               style={{ 
-                color: theme.palette.primary.dark,
+                color: '#1a237e',
                 justifyContent: 'flex-start',
                 textAlign: 'left'
               }}
@@ -301,11 +312,11 @@ function Sidebar({ isOpen, onClose, onSidebarStateChange }) {
           <motion.div variants={itemVariants}>
             <Button
               fullWidth
-              startIcon={<FaSignOutAlt style={{ color: theme.palette.error.main }} />}
+              startIcon={signOutIcon}
               onClick={handleLogout}
               className="justify-start p-3 mt-4 rounded-lg hover:bg-red-50 transition-colors duration-300"
               style={{ 
-                color: theme.palette.error.main,
+                color: '#d32f2f',
                 justifyContent: 'flex-start',
                 textAlign: 'left'
               }}

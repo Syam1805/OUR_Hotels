@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { getUserBookings, cancelBooking } from '../api/api';
 import Loader from '../components/Loader';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaHotel, FaBed, FaCalendarAlt, FaCheckCircle, FaMoneyBillWave, FaUser, FaArrowLeft, FaInfoCircle, FaTimes, FaHotel as FaViewHotel } from 'react-icons/fa';
+import { FaHotel, FaBed, FaCalendarAlt, FaCheckCircle, FaMoneyBillWave, FaUser, FaArrowLeft, FaInfoCircle, FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert, AlertTitle, Snackbar, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -103,6 +103,10 @@ function OrderHistory() {
   };
 
   const handleCancelClick = (booking) => {
+    // Prevent cancelling if already cancelled or completed
+    if (booking.status === 'CANCELLED' || booking.status === 'COMPLETED') {
+      return;
+    }
     setSelectedBooking(booking);
     setShowCancelDialog(true);
   };
@@ -122,7 +126,16 @@ function OrderHistory() {
         severity: 'success'
       });
       
-      // Refresh the bookings list
+      // Update the booking status locally immediately to prevent further cancellations
+      setBookings(prevBookings => 
+        prevBookings.map(booking => 
+          booking.bookingId === selectedBooking.bookingId 
+            ? { ...booking, status: 'CANCELLED' } 
+            : booking
+        )
+      );
+      
+      // Then refresh the bookings list from server
       const updatedBookings = await getUserBookings(user.userId);
       setBookings(updatedBookings || []);
       
@@ -138,14 +151,6 @@ function OrderHistory() {
       setShowCancelDialog(false);
       setSelectedBooking(null);
     }
-  };
-
-  const handleViewHotel = (hotelId) => {
-    navigate(`/hotels/${hotelId}`);
-  };
-
-  const handleBookingDetails = (bookingId) => {
-    navigate(`/booking-details/${bookingId}`);
   };
 
   const handleCloseNotification = () => {
@@ -215,31 +220,38 @@ function OrderHistory() {
                 <motion.div
                   key={booking.bookingId}
                   variants={cardHover}
-                  whileHover="hover"
+                  whileHover={booking.status !== 'CANCELLED' ? "hover" : ""}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.5 }}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
+                  className={`rounded-xl shadow-lg overflow-hidden border-2 ${
+                    booking.status === 'CANCELLED' 
+                      ? 'bg-white border-red-300' 
+                      : 'bg-white border-gray-200'
+                  }`}
                 >
+                  {booking.status === 'CANCELLED' && (
+                    <div className="bg-red-500 h-1 w-full"></div>
+                  )}
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center">
-                        <div className="bg-red-100 p-3 rounded-full mr-3">
-                          <FaHotel className="text-red-700 text-xl" />
+                        <div className={`p-3 rounded-full mr-3 ${
+                          booking.status === 'CANCELLED' 
+                            ? 'bg-red-100' 
+                            : 'bg-red-100'
+                        }`}>
+                          <FaHotel className={`${
+                            booking.status === 'CANCELLED' 
+                              ? 'text-red-600' 
+                              : 'text-red-700'
+                          } text-xl`} />
                         </div>
                         <div>
-                          {/* Clickable hotel name */}
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => handleViewHotel(booking.hotelId || booking.room?.hotel?.hotelId)}
-                            className="text-left"
-                          >
-                            <h3 className="text-lg font-bold text-gray-800 hover:text-red-700 transition-colors">
-                              {booking.hotelName}
-                            </h3>
-                          </motion.button>
+                          <h3 className="text-lg font-bold text-gray-800">
+                            {booking.hotelName}
+                          </h3>
                           <p className="text-sm text-gray-600">Booking ID: #{booking.bookingId}</p>
                         </div>
                       </div>
@@ -250,33 +262,49 @@ function OrderHistory() {
                     <div className="space-y-3 mb-6">
                       <div className="flex items-center">
                         <FaBed className="text-gray-500 mr-3" />
-                        <span className="text-gray-700">{booking.roomType}</span>
+                        <span className="text-gray-700">
+                          {booking.roomType}
+                        </span>
                       </div>
                       
                       <div className="flex items-center">
                         <FaCalendarAlt className="text-gray-500 mr-3" />
                         <div>
                           <p className="text-gray-700 font-medium">Check-in</p>
-                          <p className="text-gray-600">{booking.checkInDate}</p>
+                          <p className="text-gray-600">
+                            {booking.checkInDate}
+                          </p>
                         </div>
                         <div className="mx-4 text-gray-400">→</div>
                         <div>
                           <p className="text-gray-700 font-medium">Check-out</p>
-                          <p className="text-gray-600">{booking.checkOutDate}</p>
+                          <p className="text-gray-600">
+                            {booking.checkOutDate}
+                          </p>
                         </div>
                       </div>
                       
                       <div className="flex items-center">
                         <FaUser className="text-gray-500 mr-3" />
-                        <span className="text-gray-700">{booking.guestName || user?.name || 'Guest'}</span>
+                        <span className="text-gray-700">
+                          {booking.guestName || user?.name || 'Guest'}
+                        </span>
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <FaMoneyBillWave className="text-gray-500 mr-3" />
-                          <span className="text-gray-700">Total Price</span>
+                          <span className="text-gray-700">
+                            Total Price
+                          </span>
                         </div>
-                        <span className="text-lg font-bold text-red-700">${booking.totalPrice}</span>
+                        <span className={`text-lg font-bold ${
+                          booking.status === 'CANCELLED' 
+                            ? 'text-red-700 line-through' 
+                            : 'text-red-700'
+                        }`}>
+                          ${booking.totalPrice}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
@@ -293,16 +321,6 @@ function OrderHistory() {
                       </div>
                       
                       <div className="flex space-x-2">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleViewHotel(booking.hotelId || booking.room?.hotel?.hotelId)}
-                          className="flex items-center text-blue-600 font-medium hover:text-blue-800"
-                        >
-                          <FaViewHotel className="mr-1" />
-                          Hotel
-                        </motion.button>
-                        
                         {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED' && (
                           <motion.button
                             whileHover={{ scale: 1.05 }}
@@ -314,15 +332,6 @@ function OrderHistory() {
                             Cancel
                           </motion.button>
                         )}
-                        
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleBookingDetails(booking.bookingId)}
-                          className="text-red-700 font-medium hover:text-red-800"
-                        >
-                          Details
-                        </motion.button>
                       </div>
                     </div>
                   </div>
@@ -384,7 +393,7 @@ function OrderHistory() {
         open={notification.open}
         autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert 
           onClose={handleCloseNotification} 

@@ -20,7 +20,6 @@ const fadeIn = {
   hidden: { opacity: 0, y: 50 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
 };
-
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
@@ -31,7 +30,6 @@ const staggerContainer = {
     }
   }
 };
-
 const featureCardVariants = {
   hidden: { opacity: 0, y: 50, scale: 0.95 },
   visible: { 
@@ -50,7 +48,6 @@ const featureCardVariants = {
     transition: { duration: 0.3, ease: "easeInOut" }
   }
 };
-
 const searchVariants = {
   hidden: { opacity: 0, scale: 0.9, y: 20 },
   visible: { 
@@ -69,7 +66,6 @@ const searchVariants = {
     transition: { duration: 0.3 }
   }
 };
-
 const offerCardVariants = {
   hidden: { opacity: 0, x: -50 },
   visible: { 
@@ -87,7 +83,6 @@ const offerCardVariants = {
     transition: { duration: 0.3 }
   }
 };
-
 const destinationCardVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.95 },
   visible: { 
@@ -106,7 +101,6 @@ const destinationCardVariants = {
     transition: { duration: 0.3 }
   }
 };
-
 const floatingAnimation = {
   y: [0, -10, 0],
   transition: {
@@ -115,7 +109,6 @@ const floatingAnimation = {
     repeatType: "reverse"
   }
 };
-
 const sectionVariants = {
   hidden: { opacity: 0, y: 100 },
   visible: { 
@@ -127,7 +120,6 @@ const sectionVariants = {
     } 
   }
 };
-
 const pulseAnimation = {
   scale: [1, 1.05, 1],
   transition: {
@@ -288,7 +280,6 @@ function Home() {
   const [guests, setGuests] = useState(1);
   const [email, setEmail] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('hotels');
   
   // Check if sidebar is open by listening to body class
   useEffect(() => {
@@ -396,7 +387,7 @@ function Home() {
     {
       name: "Bengaluru",
       country: "India",
-      imageUrl: "https://images.unsplash.com/photo-1596495578068-14e119d28933?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1596422938231-0f89c7f8c5c9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
       icon: <FaCity size={24} />,
       popularity: 92,
       hotelCount: 950,
@@ -420,7 +411,7 @@ function Home() {
     {
       name: "Chennai",
       country: "India",
-      imageUrl: "https://images.unsplash.com/photo-1596422938231-0f89c7f8c5c9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1596495577886-d3a2a9f0c16a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
       icon: <FaUmbrellaBeach size={24} />,
       popularity: 85,
       hotelCount: 800,
@@ -432,7 +423,7 @@ function Home() {
     {
       name: "Varanasi",
       country: "India",
-      imageUrl: "https://images.unsplash.com/photo-1596495577886-d3a2a9f0c16a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1596495578068-14e119d28933?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
       icon: <FaMountain size={24} />,
       popularity: 88,
       hotelCount: 600,
@@ -474,7 +465,7 @@ function Home() {
         background: 'linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%)',
         marginLeft: sidebarOpen ? '16rem' : '0',
         width: sidebarOpen ? 'calc(100% - 16rem)' : '100%',
-        transition: 'margin-left 0.3s ease, width 0.3s ease' // Added transition for smooth sidebar toggle
+        transition: 'margin-left 0.3s ease, width 0.3s ease'
       }}
     >
       <ScrollProgressBar />
@@ -530,7 +521,7 @@ function Home() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.8, type: 'spring', bounce: 0.4 }}
           >
-            Welcome to YoYo Hotels
+            Welcome to OUR Hotels
           </motion.h1>
           <motion.p
             className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto"
@@ -541,28 +532,6 @@ function Home() {
           >
             Discover and book the finest hotels for your dream vacation.
           </motion.p>
-          
-          {/* Tab navigation */}
-          <motion.div 
-            className="flex justify-center mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <div className="inline-flex bg-white bg-opacity-70 backdrop-blur-sm rounded-full p-1">
-              {['hotels', 'flights', 'cars', 'experiences'].map((tab) => (
-                <motion.button
-                  key={tab}
-                  className={`px-6 py-2 rounded-full capitalize ${activeTab === tab ? 'bg-blue-600 text-white' : 'text-blue-800'}`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
           
           {/* Transparent search form */}
           <motion.div
@@ -716,12 +685,12 @@ function Home() {
               fontSize: '2.5rem'
             }}
           >
-            Why Choose YoYo Hotels?
+            Why Choose OUR Hotels?
           </Typography>
           <Typography variant="h6" className="text-center mb-12" style={{ color: '#0277bd', fontSize: '1.2rem' }}>
             Experience the difference with our premium services
           </Typography>
-          
+          <br></br>
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -865,6 +834,7 @@ function Home() {
                         <Button
                           variant="contained"
                           endIcon={<FaChevronRight />}
+                          onClick={() => navigate('/hotels')}
                           style={{
                             background: 'linear-gradient(45deg, #0277bd, #01579b)',
                             padding: '10px 24px',
@@ -924,7 +894,7 @@ function Home() {
           <Typography variant="h6" className="text-center mb-12" style={{ color: '#0277bd', fontSize: '1.2rem' }}>
             Everything you need for a perfect stay
           </Typography>
-          
+          <br></br>
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -1142,28 +1112,6 @@ function Home() {
                     </div>
                   </div>
                 </div>
-                
-                {/* Hover Overlay */}
-                <motion.div 
-                  className="absolute inset-0 bg-gradient-to-t from-blue-900/90 to-blue-700/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center p-5 text-center"
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Typography variant="h6" className="font-bold text-xl mb-2">
-                    Explore {destination.name}
-                  </Typography>
-                  <Typography variant="body2" className="mb-4 text-blue-100">
-                    {destination.description}
-                  </Typography>
-                  <motion.button
-                    className="bg-white text-blue-700 font-bold px-4 py-2 rounded-full text-sm"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    View Hotels
-                  </motion.button>
-                </motion.div>
               </motion.div>
             ))}
           </motion.div>
@@ -1182,7 +1130,7 @@ function Home() {
                 boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
               }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/destinations')}
+              onClick={() => navigate('/hotels')}
             >
               View All Destinations
             </motion.button>
@@ -1192,57 +1140,6 @@ function Home() {
         {/* Decorative Elements */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
-      </motion.section>
-      
-      {/* Hotel Amenities Section */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={sectionVariants}
-        className="py-16 px-4 relative overflow-hidden"
-        style={{ backgroundColor: 'rgba(224, 247, 250, 0.5)' }}
-      >
-        <div className="max-w-6xl mx-auto">
-          <Typography
-            variant="h3"
-            component="h2"
-            className="text-center font-bold mb-4"
-            style={{
-              background: 'linear-gradient(45deg, #0277bd, #01579b)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontSize: '2.5rem'
-            }}
-          >
-            Hotel Amenities
-          </Typography>
-          <Typography variant="h6" className="text-center mb-12" style={{ color: '#0277bd', fontSize: '1.2rem' }}>
-            Premium facilities for a comfortable stay
-          </Typography>
-          
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6"
-          >
-            {hotelAmenities.map((amenity, index) => (
-              <motion.div
-                key={index}
-                variants={featureCardVariants}
-                whileHover="hover"
-                className="bg-white rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-md"
-              >
-                <div className="text-blue-600 mb-2">{amenity.icon}</div>
-                <Typography variant="body2" className="text-gray-700 font-medium">
-                  {amenity.name}
-                </Typography>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
       </motion.section>
       
       {/* Weather and Recommendations Section */}
@@ -1378,93 +1275,6 @@ function Home() {
         </div>
       </motion.section>
       
-      {/* Newsletter Subscription Section */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={sectionVariants}
-        className="py-16 px-4 relative overflow-hidden"
-        style={{ backgroundColor: 'rgba(224, 247, 250, 0.5)' }}
-      >
-        {/* Background decoration */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute top-1/3 left-1/3 w-96 h-96 rounded-full bg-blue-100 opacity-20"></div>
-        </div>
-        
-        <div className="max-w-4xl mx-auto relative z-10 text-center">
-          <Typography
-            variant="h3"
-            component="h2"
-            className="font-bold mb-4"
-            style={{
-              background: 'linear-gradient(45deg, #0277bd, #01579b)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontSize: '2.5rem'
-            }}
-          >
-            Stay Updated
-          </Typography>
-          <Typography variant="h6" className="mb-8" style={{ color: '#0277bd', fontSize: '1.2rem' }}>
-            Subscribe to our newsletter for exclusive deals and travel tips!
-          </Typography>
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="bg-white bg-opacity-80 backdrop-blur-sm rounded-2xl p-8 shadow-lg"
-          >
-            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
-              <TextField
-                label="Email Address"
-                variant="outlined"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                InputProps={{
-                  style: { color: '#01579b', backgroundColor: 'rgba(255, 255, 255, 0.8)' },
-                  className: 'rounded-lg',
-                }}
-                InputLabelProps={{ style: { color: '#0277bd' } }}
-                className="w-full md:flex-grow"
-                size="small"
-              />
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  variant="contained"
-                  startIcon={<FaEnvelope />}
-                  onClick={handleNewsletterSubmit}
-                  style={{
-                    background: 'linear-gradient(45deg, #0277bd, #01579b)',
-                    padding: '12px 24px',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 14px rgba(2, 119, 189, 0.4)',
-                    whiteSpace: 'nowrap'
-                  }}
-                  sx={{
-                    '&:hover': {
-                      background: 'linear-gradient(45deg, #01579b, #0277bd)',
-                      transform: 'translateY(-2px)',
-                    },
-                  }}
-                >
-                  Subscribe
-                </Button>
-              </motion.div>
-            </div>
-            
-            <div className="flex items-center justify-center mt-6 text-sm text-gray-600">
-              <FaMedal className="text-yellow-500 mr-2" />
-              <span>Join 50,000+ subscribers getting exclusive deals</span>
-            </div>
-          </motion.div>
-        </div>
-      </motion.section>
-      
       {/* Call to Action Section */}
       <motion.section
         initial="hidden"
@@ -1502,7 +1312,7 @@ function Home() {
           <Typography variant="h6" className="mb-10 text-white text-opacity-90" style={{ fontSize: '1.2rem' }}>
             Join thousands of satisfied travelers who have found their perfect stay with YoYo Hotels.
           </Typography>
-          
+          <br></br>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
@@ -1528,28 +1338,7 @@ function Home() {
               </Button>
             </motion.div>
             
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="outlined"
-                size="large"
-                style={{
-                  color: '#ffffff',
-                  borderColor: '#ffffff',
-                  padding: '14px 36px',
-                  fontSize: '1.125rem',
-                  fontWeight: 600,
-                  borderRadius: '50px',
-                  borderWidth: '2px',
-                }}
-                sx={{
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  },
-                }}
-              >
-                Learn More
-              </Button>
-            </motion.div>
+            
           </div>
           
           <div className="flex justify-center mt-12 space-x-8">
@@ -1576,5 +1365,4 @@ function Home() {
     </motion.div>
   );
 }
-
 export default Home;

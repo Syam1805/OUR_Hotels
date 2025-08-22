@@ -9,20 +9,17 @@ import {
   getUsers,
   updateUser,
   deleteUser as apiDeleteUser,
-  getRevenueReport,
-  getOccupancyReport,
   searchHotels,
   getAllBookings,
 } from '../api/api.js';
 import Loader from '../components/Loader';
-import { Line, Bar, Pie } from 'react-chartjs-2';
+import { Line, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   ArcElement,
   Title,
   Tooltip,
@@ -36,19 +33,16 @@ import {
   FaCog, FaSearch, FaFilter, FaDownload, FaUserCircle, FaMoneyBillWave, 
   FaPercentage, FaLink, FaStar, FaMapMarkerAlt, FaImage, FaSave, FaTimesCircle
 } from 'react-icons/fa';
-
 ChartJS.register(
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   ArcElement,
   Title,
   Tooltip,
   Legend
 );
-
 // Classic color palette
 const COLORS = {
   primary: '#8B0000', // Burgundy
@@ -61,13 +55,11 @@ const COLORS = {
   warning: '#FF8C00', // Dark orange
   danger: '#B22222', // Fire brick
 };
-
 // Animation variants
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7 } },
 };
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -75,7 +67,6 @@ const containerVariants = {
     transition: { staggerChildren: 0.1, delayChildren: 0.2 }
   },
 };
-
 const cardHover = {
   hover: { 
     scale: 1.03, 
@@ -84,19 +75,16 @@ const cardHover = {
     transition: { duration: 0.3 }
   }
 };
-
 const navbarItem = {
   rest: { scale: 1, color: COLORS.dark },
   hover: { scale: 1.05, color: COLORS.primary },
   tap: { scale: 0.95 }
 };
-
 const imageVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { duration: 0.5 } },
   exit: { opacity: 0, transition: { duration: 0.3 } }
 };
-
 const floatingAnimation = {
   y: [0, -10, 0],
   transition: {
@@ -105,7 +93,6 @@ const floatingAnimation = {
     repeatType: "reverse"
   }
 };
-
 const pulseAnimation = {
   scale: [1, 1.05, 1],
   transition: {
@@ -114,27 +101,130 @@ const pulseAnimation = {
     repeatType: "reverse"
   }
 };
-
 // Form Components with memoization to prevent re-renders
 const HotelForm = React.memo(({ 
-  hotelForm, 
-  setHotelForm, 
-  hotelImageUrls, 
-  setHotelImageUrls, 
-  hotelImagePreviews, 
-  setHotelImagePreviews, 
-  currentImageIndex, 
-  setCurrentImageIndex, 
-  processingUrls, 
-  setProcessingUrls, 
   handleAddHotel, 
-  handleHotelImagesChange, 
-  handleAddImageUrls, 
-  removeHotelImage, 
-  nextImage, 
-  prevImage, 
   busy 
 }) => {
+  // Local state for form fields
+  const [hotelForm, setHotelForm] = useState({
+    name: '',
+    location: '',
+    description: '',
+    rating: '',
+    hotelImages: [],
+  });
+  const [hotelImageUrls, setHotelImageUrls] = useState('');
+  const [hotelImagePreviews, setHotelImagePreviews] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [processingUrls, setProcessingUrls] = useState(false);
+  // Image handlers
+  const handleHotelImagesChange = useCallback((e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    const newImagePreviews = [];
+    const readers = [];
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      readers.push(new Promise((resolve) => {
+        reader.onloadend = () => {
+          newImagePreviews.push(reader.result);
+          resolve();
+        };
+        reader.readAsDataURL(file);
+      }));
+    });
+    
+    Promise.all(readers).then(() => {
+      setHotelForm(prev => ({
+        ...prev,
+        hotelImages: [...prev.hotelImages, ...newImagePreviews]
+      }));
+      setHotelImagePreviews(prev => [...prev, ...newImagePreviews]);
+    });
+  }, []);
+  
+  const handleAddImageUrls = useCallback(async () => {
+    const urls = hotelImageUrls.split('\n').filter(url => url.trim() !== '');
+    if (urls.length === 0) return;
+    
+    setProcessingUrls(true);
+    const newImages = [];
+    const newPreviews = [];
+    
+    for (const url of urls) {
+      try {
+        if (!url.match(/\.(jpeg|jpg|gif|png)$/i)) {
+          toast.error(`Invalid image URL: ${url}`);
+          continue;
+        }
+        
+        newImages.push(url);
+        newPreviews.push(url);
+      } catch (error) {
+        console.error(`Failed to process image URL ${url}:`, error);
+        toast.error(`Failed to process image URL: ${url}`);
+      }
+    }
+    
+    setHotelForm(prev => ({
+      ...prev,
+      hotelImages: [...prev.hotelImages, ...newImages]
+    }));
+    setHotelImagePreviews(prev => [...prev, ...newPreviews]);
+    setHotelImageUrls('');
+    setProcessingUrls(false);
+  }, [hotelImageUrls]);
+  
+  const removeHotelImage = useCallback((index) => {
+    setHotelForm(prev => ({
+      ...prev,
+      hotelImages: prev.hotelImages.filter((_, i) => i !== index)
+    }));
+    setHotelImagePreviews(prev => {
+      const newPreviews = prev.filter((_, i) => i !== index);
+      if (currentImageIndex >= newPreviews.length) {
+        setCurrentImageIndex(newPreviews.length > 0 ? newPreviews.length - 1 : 0);
+      }
+      return newPreviews;
+    });
+  }, [currentImageIndex]);
+  
+  const nextImage = useCallback(() => {
+    setCurrentImageIndex(prev => (prev + 1) % hotelImagePreviews.length);
+  }, [hotelImagePreviews.length]);
+  
+  const prevImage = useCallback(() => {
+    setCurrentImageIndex(prev => (prev - 1 + hotelImagePreviews.length) % hotelImagePreviews.length);
+  }, [hotelImagePreviews.length]);
+  // Submit handler
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    if (!hotelForm.name || !hotelForm.location) {
+      toast.warn('Name and Location are required');
+      return;
+    }
+    
+    const payload = {
+      name: hotelForm.name.trim(),
+      location: hotelForm.location.trim(),
+      description: hotelForm.description?.trim() || '',
+      rating:
+        hotelForm.rating === '' || hotelForm.rating === null
+          ? null
+          : Number(hotelForm.rating),
+      hotelImages: hotelForm.hotelImages || [],
+    };
+    
+    await handleAddHotel(payload);
+    
+    // Reset form
+    setHotelForm({ name: '', location: '', description: '', rating: '', hotelImages: [] });
+    setHotelImagePreviews([]);
+    setCurrentImageIndex(0);
+  }, [hotelForm, handleAddHotel]);
   return (
     <motion.div 
       variants={fadeIn} 
@@ -144,7 +234,7 @@ const HotelForm = React.memo(({
       <h3 className="text-xl font-bold mb-4 flex items-center" style={{ color: COLORS.primary }}>
         <FaPlus className="mr-2" /> Add New Hotel
       </h3>
-      <form onSubmit={handleAddHotel} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
           <FaHotel className="absolute left-3 top-3.5 text-gray-400" />
           <input
@@ -332,16 +422,70 @@ const HotelForm = React.memo(({
     </motion.div>
   );
 });
-
 const RoomForm = React.memo(({ 
-  roomForm, 
-  setRoomForm, 
-  roomImagePreview, 
-  handleRoomImageChange, 
   handleAddOrUpdateRoom, 
   busy, 
   hotels 
 }) => {
+  // Local state for form fields
+  const [roomForm, setRoomForm] = useState({
+    hotelId: '',
+    roomType: '',
+    pricePerNight: '',
+    amenities: '',
+    availabilityStatus: true,
+    roomId: '',
+    roomImage: '',
+  });
+  const [roomImagePreview, setRoomImagePreview] = useState('');
+  // Image handler
+  const handleRoomImageChange = useCallback((e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setRoomForm((prev) => ({ ...prev, roomImage: reader.result }));
+      setRoomImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+  // Submit handler
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    if (!roomForm.hotelId || !roomForm.roomType) {
+      toast.warn('Hotel ID and Room Type are required');
+      return;
+    }
+    
+    const payload = {
+      hotelId: Number(roomForm.hotelId),
+      roomType: roomForm.roomType.trim(),
+      pricePerNight:
+        roomForm.pricePerNight === '' || roomForm.pricePerNight === null
+          ? null
+          : Number(roomForm.pricePerNight),
+      amenities: roomForm.amenities?.trim() || '',
+      availabilityStatus:
+        typeof roomForm.availabilityStatus === 'boolean'
+          ? roomForm.availabilityStatus
+          : String(roomForm.availabilityStatus) === 'true',
+      roomImage: roomForm.roomImage || '',
+    };
+    
+    await handleAddOrUpdateRoom(payload, roomForm.roomId);
+    
+    // Reset form
+    setRoomForm({
+      hotelId: '',
+      roomType: '',
+      pricePerNight: '',
+      amenities: '',
+      availabilityStatus: true,
+      roomId: '',
+      roomImage: '',
+    });
+    setRoomImagePreview('');
+  }, [roomForm, handleAddOrUpdateRoom]);
   return (
     <motion.div 
       variants={fadeIn} 
@@ -351,7 +495,7 @@ const RoomForm = React.memo(({
       <h3 className="text-xl font-bold mb-4 flex items-center" style={{ color: COLORS.primary }}>
         <FaPlus className="mr-2" /> Add / Update Room
       </h3>
-      <form onSubmit={handleAddOrUpdateRoom} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block mb-2 font-medium" style={{ color: COLORS.dark }}>Hotel</label>
           <select
@@ -462,13 +606,53 @@ const RoomForm = React.memo(({
     </motion.div>
   );
 });
-
 const UserForm = React.memo(({ 
-  userForm, 
-  setUserForm, 
   handleUpdateUser, 
-  busy 
+  busy,
+  prePopulatedUser
 }) => {
+  // Local state for form fields
+  const [userForm, setUserForm] = useState({
+    userId: '',
+    name: '',
+    email: '',
+    phone: '',
+    role: 'USER',
+  });
+  // Populate form when prePopulatedUser changes
+  useEffect(() => {
+    if (prePopulatedUser) {
+      setUserForm({
+        userId: prePopulatedUser.userId || '',
+        name: prePopulatedUser.name || '',
+        email: prePopulatedUser.email || '',
+        phone: prePopulatedUser.phone || '',
+        role: prePopulatedUser.role || 'USER',
+      });
+    }
+  }, [prePopulatedUser]);
+  
+  // Submit handler
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    if (!userForm.userId) {
+      toast.warn('Pick a user to edit (click Edit on a user card)');
+      return;
+    }
+    
+    const payload = {
+      name: userForm.name?.trim(),
+      email: userForm.email?.trim(),
+      phone: userForm.phone?.trim(),
+      role: userForm.role,
+      password: '',
+    };
+    
+    await handleUpdateUser(Number(userForm.userId), payload);
+    
+    // Reset form
+    setUserForm({ userId: '', name: '', email: '', phone: '', role: 'USER' });
+  }, [userForm, handleUpdateUser]);
   return (
     <motion.div 
       variants={fadeIn} 
@@ -478,7 +662,7 @@ const UserForm = React.memo(({
       <h3 className="text-xl font-bold mb-4 flex items-center" style={{ color: COLORS.primary }}>
         <FaEdit className="mr-2" /> Update User
       </h3>
-      <form onSubmit={handleUpdateUser} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block mb-2 font-medium" style={{ color: COLORS.dark }}>User ID</label>
           <input
@@ -565,7 +749,6 @@ const UserForm = React.memo(({
     </motion.div>
   );
 });
-
 function AdminDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [hotels, setHotels] = useState([]);
@@ -573,44 +756,11 @@ function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [bookings, setBookings] = useState([]);
   
-  // Form states
-  const [hotelForm, setHotelForm] = useState({
-    name: '',
-    location: '',
-    description: '',
-    rating: '',
-    hotelImages: [],
-  });
-  const [hotelImageUrls, setHotelImageUrls] = useState('');
-  const [hotelImagePreviews, setHotelImagePreviews] = useState([]);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [roomForm, setRoomForm] = useState({
-    hotelId: '',
-    roomType: '',
-    pricePerNight: '',
-    amenities: '',
-    availabilityStatus: true,
-    roomId: '',
-    roomImage: '',
-  });
-  const [roomImagePreview, setRoomImagePreview] = useState('');
-  const [userForm, setUserForm] = useState({
-    userId: '',
-    name: '',
-    email: '',
-    phone: '',
-    role: 'USER',
-  });
-  
-  const [reportDates, setReportDates] = useState({ startDate: '', endDate: '' });
-  const [revenueData, setRevenueData] = useState(null);
-  const [occupancyData, setOccupancyData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [processingUrls, setProcessingUrls] = useState(false);
   
   // Check if sidebar is open by listening to body class
   useEffect(() => {
@@ -675,124 +825,13 @@ function AdminDashboard() {
     loadHotelsUsersBookings();
   }, [loadHotelsUsersBookings]);
   
-  // ---------- image handlers ----------
-  const handleHotelImagesChange = useCallback((e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-    
-    const newImagePreviews = [];
-    const readers = [];
-    
-    files.forEach(file => {
-      const reader = new FileReader();
-      readers.push(new Promise((resolve) => {
-        reader.onloadend = () => {
-          newImagePreviews.push(reader.result);
-          resolve();
-        };
-        reader.readAsDataURL(file);
-      }));
-    });
-    
-    Promise.all(readers).then(() => {
-      setHotelForm(prev => ({
-        ...prev,
-        hotelImages: [...prev.hotelImages, ...newImagePreviews]
-      }));
-      setHotelImagePreviews(prev => [...prev, ...newImagePreviews]);
-    });
-  }, []);
-  
-  const handleAddImageUrls = useCallback(async () => {
-    const urls = hotelImageUrls.split('\n').filter(url => url.trim() !== '');
-    if (urls.length === 0) return;
-    
-    setProcessingUrls(true);
-    const newImages = [];
-    const newPreviews = [];
-    
-    for (const url of urls) {
-      try {
-        if (!url.match(/\.(jpeg|jpg|gif|png)$/i)) {
-          toast.error(`Invalid image URL: ${url}`);
-          continue;
-        }
-        
-        newImages.push(url);
-        newPreviews.push(url);
-      } catch (error) {
-        console.error(`Failed to process image URL ${url}:`, error);
-        toast.error(`Failed to process image URL: ${url}`);
-      }
-    }
-    
-    setHotelForm(prev => ({
-      ...prev,
-      hotelImages: [...prev.hotelImages, ...newImages]
-    }));
-    setHotelImagePreviews(prev => [...prev, ...newPreviews]);
-    setHotelImageUrls('');
-    setProcessingUrls(false);
-  }, [hotelImageUrls]);
-  
-  const removeHotelImage = useCallback((index) => {
-    setHotelForm(prev => ({
-      ...prev,
-      hotelImages: prev.hotelImages.filter((_, i) => i !== index)
-    }));
-    setHotelImagePreviews(prev => {
-      const newPreviews = prev.filter((_, i) => i !== index);
-      if (currentImageIndex >= newPreviews.length) {
-        setCurrentImageIndex(newPreviews.length > 0 ? newPreviews.length - 1 : 0);
-      }
-      return newPreviews;
-    });
-  }, [currentImageIndex]);
-  
-  const nextImage = useCallback(() => {
-    setCurrentImageIndex(prev => (prev + 1) % hotelImagePreviews.length);
-  }, [hotelImagePreviews.length]);
-  
-  const prevImage = useCallback(() => {
-    setCurrentImageIndex(prev => (prev - 1 + hotelImagePreviews.length) % hotelImagePreviews.length);
-  }, [hotelImagePreviews.length]);
-  
-  const handleRoomImageChange = useCallback((e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setRoomForm((prev) => ({ ...prev, roomImage: reader.result }));
-      setRoomImagePreview(reader.result);
-    };
-    reader.readAsDataURL(file);
-  }, []);
-  
   // ---------- handlers: HOTELS ----------
-  const handleAddHotel = useCallback(async (e) => {
-    e.preventDefault();
-    if (!hotelForm.name || !hotelForm.location) {
-      toast.warn('Name and Location are required');
-      return;
-    }
+  const handleAddHotel = useCallback(async (payload) => {
     setBusy(true);
     try {
-      const payload = {
-        name: hotelForm.name.trim(),
-        location: hotelForm.location.trim(),
-        description: hotelForm.description?.trim() || '',
-        rating:
-          hotelForm.rating === '' || hotelForm.rating === null
-            ? null
-            : Number(hotelForm.rating),
-        hotelImages: hotelForm.hotelImages || [],
-      };
       console.log('Adding hotel with payload:', payload);
       const created = await addHotel(payload);
       toast.success(`Hotel "${created.name}" added`);
-      setHotelForm({ name: '', location: '', description: '', rating: '', hotelImages: [] });
-      setHotelImagePreviews([]);
-      setCurrentImageIndex(0);
       await loadHotelsUsersBookings();
     } catch (e) {
       console.error(e);
@@ -800,7 +839,7 @@ function AdminDashboard() {
     } finally {
       setBusy(false);
     }
-  }, [hotelForm, loadHotelsUsersBookings]);
+  }, [loadHotelsUsersBookings]);
   
   const handleDeleteHotel = useCallback(async (hotelId) => {
     if (!window.confirm('Delete this hotel?')) return;
@@ -822,46 +861,17 @@ function AdminDashboard() {
   }, []);
   
   // ---------- handlers: ROOMS ----------
-  const handleAddOrUpdateRoom = useCallback(async (e) => {
-    e.preventDefault();
-    if (!roomForm.hotelId || !roomForm.roomType) {
-      toast.warn('Hotel ID and Room Type are required');
-      return;
-    }
+  const handleAddOrUpdateRoom = useCallback(async (payload, roomId) => {
     setBusy(true);
     try {
-      const payload = {
-        hotelId: Number(roomForm.hotelId),
-        roomType: roomForm.roomType.trim(),
-        pricePerNight:
-          roomForm.pricePerNight === '' || roomForm.pricePerNight === null
-            ? null
-            : Number(roomForm.pricePerNight),
-        amenities: roomForm.amenities?.trim() || '',
-        availabilityStatus:
-          typeof roomForm.availabilityStatus === 'boolean'
-            ? roomForm.availabilityStatus
-            : String(roomForm.availabilityStatus) === 'true',
-        roomImage: roomForm.roomImage || '',
-      };
-      if (roomForm.roomId) {
-        await updateRoom(Number(roomForm.roomId), payload);
+      if (roomId) {
+        await updateRoom(Number(roomId), payload);
         toast.success('Room updated');
       } else {
         await addRoom(payload);
         toast.success('Room added');
       }
-      const hid = Number(roomForm.hotelId);
-      setRoomForm({
-        hotelId: '',
-        roomType: '',
-        pricePerNight: '',
-        amenities: '',
-        availabilityStatus: true,
-        roomId: '',
-        roomImage: '',
-      });
-      setRoomImagePreview('');
+      const hid = Number(payload.hotelId);
       await refreshRoomsForHotel(hid);
     } catch (e) {
       console.error(e);
@@ -869,7 +879,7 @@ function AdminDashboard() {
     } finally {
       setBusy(false);
     }
-  }, [roomForm, refreshRoomsForHotel]);
+  }, [refreshRoomsForHotel]);
   
   const handleDeleteRoom = useCallback(async (roomId, hotelId) => {
     if (!window.confirm('Delete this room?')) return;
@@ -890,34 +900,21 @@ function AdminDashboard() {
   }, []);
   
   // ---------- handlers: USERS ----------
-  const handleUpdateUser = useCallback(async (e) => {
-    e.preventDefault();
-    if (!userForm.userId) {
-      toast.warn('Pick a user to edit (click Edit on a user card)');
-      return;
-    }
+  const handleUpdateUser = useCallback(async (userId, payload) => {
     setBusy(true);
     try {
-      const payload = {
-        name: userForm.name?.trim(),
-        email: userForm.email?.trim(),
-        phone: userForm.phone?.trim(),
-        role: userForm.role,
-        password: '',
-      };
-      const updated = await updateUser(Number(userForm.userId), payload);
+      const updated = await updateUser(userId, payload);
       toast.success(`User "${updated.name}" updated`);
       setUsers((prev) =>
         prev.map((u) => (u.userId === updated.userId ? updated : u))
       );
-      setUserForm({ userId: '', name: '', email: '', phone: '', role: 'USER' });
     } catch (e) {
       console.error(e);
       toast.error(e.response?.data || 'Failed to update user');
     } finally {
       setBusy(false);
     }
-  }, [userForm]);
+  }, []);
   
   const handleDeleteUser = useCallback(async (userId) => {
     if (!window.confirm('Delete this user?')) return;
@@ -935,38 +932,15 @@ function AdminDashboard() {
   }, []);
   
   const handlePopulateUser = useCallback((user) => {
-    setUserForm({
-      userId: user.userId,
-      name: user.name || '',
-      email: user.email || '',
-      phone: user.phone || '',
-      role: user.role || 'USER',
-    });
+    // This will be handled by the UserForm component
+    // We'll use a key to force re-render the form with new data
+    setUserFormKey(prev => prev + 1);
+    setPrePopulatedUser(user);
   }, []);
   
-  // ---------- handlers: REPORTS ----------
-  const handleFetchReports = useCallback(async (e) => {
-    e.preventDefault();
-    if (!reportDates.startDate || !reportDates.endDate) {
-      toast.warn('Please select both start and end dates');
-      return;
-    }
-    setBusy(true);
-    try {
-      const [revenue, occupancy] = await Promise.all([
-        getRevenueReport(reportDates.startDate, reportDates.endDate),
-        getOccupancyReport(reportDates.startDate, reportDates.endDate),
-      ]);
-      setRevenueData(revenue);
-      setOccupancyData(occupancy);
-      toast.success('Reports fetched');
-    } catch (e) {
-      console.error(e);
-      toast.error('Failed to fetch reports');
-    } finally {
-      setBusy(false);
-    }
-  }, [reportDates]);
+  // State for pre-populating user form
+  const [userFormKey, setUserFormKey] = useState(0);
+  const [prePopulatedUser, setPrePopulatedUser] = useState(null);
   
   // ---------- UI Components ----------
   const Navbar = () => (
@@ -998,7 +972,6 @@ function AdminDashboard() {
                 { id: 'rooms', icon: <FaBed className="mr-1" />, label: 'Rooms' },
                 { id: 'users', icon: <FaUsers className="mr-1" />, label: 'Users' },
                 { id: 'bookings', icon: <FaCalendarAlt className="mr-1" />, label: 'Bookings' },
-                { id: 'reports', icon: <FaChartBar className="mr-1" />, label: 'Reports' },
               ].map((item) => (
                 <motion.button
                   key={item.id}
@@ -1043,15 +1016,6 @@ function AdminDashboard() {
           <FaChartBar className="mr-3" />
           Dashboard Overview
         </h2>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center px-4 py-2 rounded-lg shadow-md transition"
-          style={{ backgroundColor: COLORS.secondary, color: COLORS.dark }}
-        >
-          <FaDownload className="mr-2" />
-          Export Report
-        </motion.button>
       </div>
       
       <motion.div 
@@ -1114,60 +1078,6 @@ function AdminDashboard() {
         ))}
       </motion.div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {revenueData && (
-          <motion.div 
-            variants={fadeIn} 
-            className="rounded-xl shadow-lg p-6 border border-red-200"
-            style={{ backgroundColor: COLORS.tertiary }}
-          >
-            <h3 className="text-xl font-bold mb-4 flex items-center" style={{ color: COLORS.primary }}>
-              <FaMoneyBillWave className="mr-2" />
-              Revenue Report
-            </h3>
-            <div className="h-80">
-              <Line
-                data={revenueData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { 
-                    legend: { position: 'top' }, 
-                    title: { display: true, text: 'Revenue Over Time' } 
-                  },
-                }}
-              />
-            </div>
-          </motion.div>
-        )}
-        
-        {occupancyData?.pie && (
-          <motion.div 
-            variants={fadeIn} 
-            className="rounded-xl shadow-lg p-6 border border-red-200"
-            style={{ backgroundColor: COLORS.tertiary }}
-          >
-            <h3 className="text-xl font-bold mb-4 flex items-center" style={{ color: COLORS.primary }}>
-              <FaPercentage className="mr-2" />
-              Occupancy Report
-            </h3>
-            <div className="h-80">
-              <Pie
-                data={occupancyData.pie}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { 
-                    legend: { position: 'top' }, 
-                    title: { display: true, text: 'Average Occupancy' } 
-                  },
-                }}
-              />
-            </div>
-          </motion.div>
-        )}
-      </div>
-      
       <motion.div 
         variants={fadeIn}
         className="rounded-xl shadow-lg p-6 border border-red-200 mb-8"
@@ -1229,19 +1139,6 @@ function AdminDashboard() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center px-4 py-2 rounded-lg shadow-md border transition"
-            style={{ 
-              backgroundColor: COLORS.light, 
-              color: COLORS.primary,
-              borderColor: COLORS.primary 
-            }}
-          >
-            <FaFilter className="mr-2" />
-            Filter
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
             className="flex items-center px-4 py-2 rounded-lg shadow-md transition"
             style={{ backgroundColor: COLORS.primary, color: COLORS.light }}
           >
@@ -1252,22 +1149,7 @@ function AdminDashboard() {
       </div>
       
       <HotelForm 
-        hotelForm={hotelForm}
-        setHotelForm={setHotelForm}
-        hotelImageUrls={hotelImageUrls}
-        setHotelImageUrls={setHotelImageUrls}
-        hotelImagePreviews={hotelImagePreviews}
-        setHotelImagePreviews={setHotelImagePreviews}
-        currentImageIndex={currentImageIndex}
-        setCurrentImageIndex={setCurrentImageIndex}
-        processingUrls={processingUrls}
-        setProcessingUrls={setProcessingUrls}
         handleAddHotel={handleAddHotel}
-        handleHotelImagesChange={handleHotelImagesChange}
-        handleAddImageUrls={handleAddImageUrls}
-        removeHotelImage={removeHotelImage}
-        nextImage={nextImage}
-        prevImage={prevImage}
         busy={busy}
       />
       
@@ -1302,8 +1184,8 @@ function AdminDashboard() {
                       <div className="mt-3 relative h-40 overflow-hidden rounded-lg">
                         <AnimatePresence mode="wait">
                           <motion.img
-                            key={currentImageIndex}
-                            src={hotel.hotelImages[currentImageIndex]}
+                            key={0}
+                            src={hotel.hotelImages[0]}
                             alt={`Hotel ${hotel.name}`}
                             className="w-full h-full object-cover"
                             variants={imageVariants}
@@ -1312,37 +1194,6 @@ function AdminDashboard() {
                             exit="exit"
                           />
                         </AnimatePresence>
-                        
-                        {hotel.hotelImages.length > 1 && (
-                          <>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-2 shadow-md"
-                              onClick={() => setCurrentImageIndex(prev => (prev - 1 + hotel.hotelImages.length) % hotel.hotelImages.length)}
-                            >
-                              <FaChevronLeft className="text-gray-700" />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-2 shadow-md"
-                              onClick={() => setCurrentImageIndex(prev => (prev + 1) % hotel.hotelImages.length)}
-                            >
-                              <FaChevronRight className="text-gray-700" />
-                            </motion.button>
-                            <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1">
-                              {hotel.hotelImages.map((_, index) => (
-                                <div
-                                  key={index}
-                                  className={`w-2 h-2 rounded-full ${
-                                    currentImageIndex === index ? 'bg-red-700' : 'bg-gray-300'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </>
-                        )}
                       </div>
                     )}
                   </div>
@@ -1377,17 +1228,11 @@ function AdminDashboard() {
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() =>
-                              setRoomForm({
-                                hotelId: hotel.hotelId,
-                                roomType: room.roomType,
-                                pricePerNight: room.pricePerNight,
-                                amenities: room.amenities,
-                                availabilityStatus: room.availabilityStatus,
-                                roomId: room.roomId,
-                                roomImage: room.roomImage || '',
-                              })
-                            }
+                            onClick={() => {
+                              // This will be handled by the RoomForm component
+                              setRoomFormKey(prev => prev + 1);
+                              setPrePopulatedRoom({ ...room, hotelId: hotel.hotelId });
+                            }}
                             className="p-2 rounded-lg shadow-md transition"
                             style={{ backgroundColor: COLORS.warning, color: COLORS.light }}
                           >
@@ -1426,19 +1271,6 @@ function AdminDashboard() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center px-4 py-2 rounded-lg shadow-md border transition"
-            style={{ 
-              backgroundColor: COLORS.light, 
-              color: COLORS.primary,
-              borderColor: COLORS.primary 
-            }}
-          >
-            <FaSearch className="mr-2" />
-            Search
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
             className="flex items-center px-4 py-2 rounded-lg shadow-md transition"
             style={{ backgroundColor: COLORS.primary, color: COLORS.light }}
           >
@@ -1449,10 +1281,6 @@ function AdminDashboard() {
       </div>
       
       <RoomForm 
-        roomForm={roomForm}
-        setRoomForm={setRoomForm}
-        roomImagePreview={roomImagePreview}
-        handleRoomImageChange={handleRoomImageChange}
         handleAddOrUpdateRoom={handleAddOrUpdateRoom}
         busy={busy}
         hotels={hotels}
@@ -1490,17 +1318,11 @@ function AdminDashboard() {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() =>
-                            setRoomForm({
-                              hotelId: hotelId,
-                              roomType: room.roomType,
-                              pricePerNight: room.pricePerNight,
-                              amenities: room.amenities,
-                              availabilityStatus: room.availabilityStatus,
-                              roomId: room.roomId,
-                              roomImage: room.roomImage || '',
-                            })
-                          }
+                          onClick={() => {
+                            // This will be handled by the RoomForm component
+                            setRoomFormKey(prev => prev + 1);
+                            setPrePopulatedRoom({ ...room, hotelId: hotelId });
+                          }}
                           className="p-2 rounded-lg shadow-md transition"
                           style={{ backgroundColor: COLORS.warning, color: COLORS.light }}
                         >
@@ -1538,19 +1360,6 @@ function AdminDashboard() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center px-4 py-2 rounded-lg shadow-md border transition"
-            style={{ 
-              backgroundColor: COLORS.light, 
-              color: COLORS.primary,
-              borderColor: COLORS.primary 
-            }}
-          >
-            <FaSearch className="mr-2" />
-            Search Users
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
             className="flex items-center px-4 py-2 rounded-lg shadow-md transition"
             style={{ backgroundColor: COLORS.primary, color: COLORS.light }}
           >
@@ -1561,10 +1370,10 @@ function AdminDashboard() {
       </div>
       
       <UserForm 
-        userForm={userForm}
-        setUserForm={setUserForm}
+        key={userFormKey}
         handleUpdateUser={handleUpdateUser}
         busy={busy}
+        prePopulatedUser={prePopulatedUser}
       />
       
       <motion.div variants={fadeIn} className="mb-8">
@@ -1625,30 +1434,6 @@ function AdminDashboard() {
           <FaCalendarAlt className="mr-3" />
           Booking Management
         </h2>
-        <div className="flex space-x-3">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center px-4 py-2 rounded-lg shadow-md border transition"
-            style={{ 
-              backgroundColor: COLORS.light, 
-              color: COLORS.primary,
-              borderColor: COLORS.primary 
-            }}
-          >
-            <FaFilter className="mr-2" />
-            Filter
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center px-4 py-2 rounded-lg shadow-md transition"
-            style={{ backgroundColor: COLORS.primary, color: COLORS.light }}
-          >
-            <FaDownload className="mr-2" />
-            Export
-          </motion.button>
-        </div>
       </div>
       
       <motion.div variants={fadeIn} className="mb-8">
@@ -1709,179 +1494,9 @@ function AdminDashboard() {
     </motion.div>
   );
   
-  const ReportsSection = () => (
-    <motion.div variants={fadeIn} initial="hidden" animate="visible">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-extrabold flex items-center" style={{ color: COLORS.primary }}>
-          <FaChartBar className="mr-3" />
-          Reports & Analytics
-        </h2>
-        <div className="flex space-x-3">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center px-4 py-2 rounded-lg shadow-md border transition"
-            style={{ 
-              backgroundColor: COLORS.light, 
-              color: COLORS.primary,
-              borderColor: COLORS.primary 
-            }}
-          >
-            <FaCog className="mr-2" />
-            Settings
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center px-4 py-2 rounded-lg shadow-md transition"
-            style={{ backgroundColor: COLORS.primary, color: COLORS.light }}
-          >
-            <FaDownload className="mr-2" />
-            Download All
-          </motion.button>
-        </div>
-      </div>
-      
-      <motion.div variants={fadeIn} className="mb-8 rounded-xl shadow-lg p-6" style={{ backgroundColor: COLORS.tertiary }}>
-        <h3 className="text-xl font-bold mb-4 flex items-center" style={{ color: COLORS.primary }}>
-          <FaChartBar className="mr-2" /> Generate Reports
-        </h3>
-        <form onSubmit={handleFetchReports} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block mb-2 font-semibold" style={{ color: COLORS.primary }}>Start Date</label>
-            <input
-              type="date"
-              value={reportDates.startDate}
-              onChange={(e) => setReportDates({ ...reportDates, startDate: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              style={{ backgroundColor: COLORS.light }}
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-2 font-semibold" style={{ color: COLORS.primary }}>End Date</label>
-            <input
-              type="date"
-              value={reportDates.endDate}
-              onChange={(e) => setReportDates({ ...reportDates, endDate: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              style={{ backgroundColor: COLORS.light }}
-              required
-            />
-          </div>
-          <div className="flex items-end">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              disabled={busy}
-              type="submit"
-              className="px-6 py-3 rounded-lg font-medium shadow-md transition w-full flex items-center justify-center"
-              style={{ 
-                backgroundColor: busy ? '#cccccc' : COLORS.primary, 
-                color: COLORS.light 
-              }}
-            >
-              {busy ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Fetching…
-                </>
-              ) : (
-                <>
-                  <FaChartBar className="mr-2" />
-                  Fetch Reports
-                </>
-              )}
-            </motion.button>
-          </div>
-        </form>
-      </motion.div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {revenueData && (
-          <motion.div 
-            variants={fadeIn} 
-            className="rounded-xl shadow-lg p-6"
-            style={{ backgroundColor: COLORS.tertiary }}
-          >
-            <h3 className="text-xl font-bold mb-4 flex items-center" style={{ color: COLORS.primary }}>
-              <FaMoneyBillWave className="mr-2" />
-              Revenue Report
-            </h3>
-            <div className="h-80">
-              <Bar
-                data={revenueData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { 
-                    legend: { position: 'top' }, 
-                    title: { display: true, text: 'Revenue Distribution' } 
-                  },
-                }}
-              />
-            </div>
-          </motion.div>
-        )}
-        
-        {occupancyData?.pie && (
-          <motion.div 
-            variants={fadeIn} 
-            className="rounded-xl shadow-lg p-6"
-            style={{ backgroundColor: COLORS.tertiary }}
-          >
-            <h3 className="text-xl font-bold mb-4 flex items-center" style={{ color: COLORS.primary }}>
-              <FaPercentage className="mr-2" />
-              Occupancy Report
-            </h3>
-            <div className="h-80">
-              <Line
-                data={occupancyData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { 
-                    legend: { position: 'top' }, 
-                    title: { display: true, text: 'Occupancy Rate Over Time' } 
-                  },
-                }}
-              />
-            </div>
-          </motion.div>
-        )}
-      </div>
-      
-      <motion.div 
-        variants={fadeIn}
-        className="rounded-xl shadow-lg p-6"
-        style={{ backgroundColor: COLORS.tertiary }}
-      >
-        <h3 className="text-xl font-bold mb-4" style={{ color: COLORS.primary }}>Key Metrics</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg border" style={{ backgroundColor: '#E6F7FF', borderColor: '#91D5FF' }}>
-            <p className="font-semibold" style={{ color: '#0050B3' }}>Average Revenue</p>
-            <p className="text-2xl font-bold" style={{ color: '#0050B3' }}>$2,450</p>
-            <p className="text-sm" style={{ color: '#0050B3' }}>+12% from last month</p>
-          </div>
-          <div className="p-4 rounded-lg border" style={{ backgroundColor: '#F6FFED', borderColor: '#B7EB8F' }}>
-            <p className="font-semibold" style={{ color: '#135200' }}>Occupancy Rate</p>
-            <p className="text-2xl font-bold" style={{ color: '#135200' }}>78%</p>
-            <p className="text-sm" style={{ color: '#135200' }}>+5% from last month</p>
-          </div>
-          <div className="p-4 rounded-lg border" style={{ backgroundColor: '#F9F0FF', borderColor: '#D3ADF7' }}>
-            <p className="font-semibold" style={{ color: '#722ED1' }}>New Bookings</p>
-            <p className="text-2xl font-bold" style={{ color: '#722ED1' }}>142</p>
-            <p className="text-sm" style={{ color: '#722ED1' }}>+22% from last month</p>
-          </div>
-          <div className="p-4 rounded-lg border" style={{ backgroundColor: '#FFF7E6', borderColor: '#FFD591' }}>
-            <p className="font-semibold" style={{ color: '#D46B08' }}>Cancellation Rate</p>
-            <p className="text-2xl font-bold" style={{ color: '#D46B08' }}>3.2%</p>
-            <p className="text-sm" style={{ color: '#D46B08' }}>-1.5% from last month</p>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
+  // State for pre-populating room form
+  const [roomFormKey, setRoomFormKey] = useState(0);
+  const [prePopulatedRoom, setPrePopulatedRoom] = useState(null);
   
   // ---------- Main Render ----------
   if (loading) return <Loader />;
@@ -1920,7 +1535,6 @@ function AdminDashboard() {
             {activeSection === 'rooms' && <RoomsSection />}
             {activeSection === 'users' && <UsersSection />}
             {activeSection === 'bookings' && <BookingsSection />}
-            {activeSection === 'reports' && <ReportsSection />}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -1940,5 +1554,4 @@ function AdminDashboard() {
     </div>
   );
 }
-
 export default AdminDashboard;

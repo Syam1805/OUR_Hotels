@@ -7,7 +7,7 @@ import LoginPopup from '../components/LoginPopup';
 import PriceAlert from '../components/PriceAlert';
 import { motion } from 'framer-motion';
 import { useTheme } from '@mui/material/styles';
-import { TextField, Button } from '@mui/material';
+import { TextField, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
 function Booking() {
   const { roomId } = useParams();
@@ -22,18 +22,25 @@ function Booking() {
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showPriceAlert, setShowPriceAlert] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const theme = useTheme();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!user) {
       setShowLogin(true);
       return;
     }
+    // Show confirmation dialog instead of booking immediately
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmBooking = async () => {
+    setShowConfirmation(false);
     setLoading(true);
     try {
       const bookingData = {
@@ -49,6 +56,10 @@ function Booking() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelBooking = () => {
+    setShowConfirmation(false);
   };
 
   if (loading) return <Loader />;
@@ -93,7 +104,7 @@ function Booking() {
           fullWidth
           className="mt-4"
         >
-          Proceed to Payment
+          Book Now
         </Button>
         <Button
           variant="outlined"
@@ -104,6 +115,30 @@ function Booking() {
           Set Price Alert
         </Button>
       </form>
+      
+      {/* Booking Confirmation Dialog */}
+      <Dialog
+        open={showConfirmation}
+        onClose={handleCancelBooking}
+        aria-labelledby="booking-confirmation-title"
+        aria-describedby="booking-confirmation-description"
+      >
+        <DialogTitle id="booking-confirmation-title">Confirm Booking</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="booking-confirmation-description">
+            Are you sure you want to book this room from {formData.checkInDate} to {formData.checkOutDate}?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelBooking} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmBooking} color="primary" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {showLogin && <LoginPopup onClose={() => setShowLogin(false)} />}
       {showPriceAlert && <PriceAlert onClose={() => setShowPriceAlert(false)} />}
     </motion.div>

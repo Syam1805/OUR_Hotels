@@ -4,12 +4,12 @@
 *.log
 
 # backend
-/yoyo/target
-/yoyo/.idea
-/yoyo/.settings
-/yoyo/.classpath
-/yoyo/.project
+/OUR_Hotels_Backend/target
+/OUR_Hotels_Backend/.idea
+/OUR_Hotels_Backend/.settings
+/OUR_Hotels_Backend/.classpath
+/OUR_Hotels_Backend/.project
 
 # frontend
-/yoyo_frontend/node_modules
-/yoyo_frontend/build
+/OUR_Hotels_Frontend/node_modules
+/OUR_Hotels_Frontend/build

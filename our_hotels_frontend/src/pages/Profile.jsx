@@ -7,12 +7,10 @@ import { FaUser, FaEnvelope, FaPhone, FaIdCard, FaHotel, FaCalendarAlt, FaCheckC
 import { useNavigate } from 'react-router-dom';
 import { Button, Typography, Box, Divider, Avatar, Card, CardContent, Grid, IconButton, Chip, Badge } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7 } },
 };
-
 const cardHover = {
   hover: { 
     scale: 1.03, 
@@ -20,7 +18,6 @@ const cardHover = {
     transition: { duration: 0.3 }
   }
 };
-
 const statusBadge = (status) => {
   switch(status) {
     case 'CONFIRMED':
@@ -35,7 +32,6 @@ const statusBadge = (status) => {
       return { bg: 'bg-gray-100', text: 'text-gray-800', chip: 'default' };
   }
 };
-
 const statusIcon = (status) => {
   switch(status) {
     case 'CONFIRMED':
@@ -50,7 +46,6 @@ const statusIcon = (status) => {
       return <FaInfoCircle className="text-gray-600" />;
   }
 };
-
 const profileCardVariants = {
   hidden: { opacity: 0, scale: 0.9 },
   visible: { 
@@ -68,7 +63,6 @@ const profileCardVariants = {
     transition: { duration: 0.3 }
   }
 };
-
 const bookingCardVariants = {
   hidden: { opacity: 0, y: 50, scale: 0.9 },
   visible: { 
@@ -89,7 +83,6 @@ const bookingCardVariants = {
     transition: { duration: 0.3 }
   }
 };
-
 const iconVariants = {
   hover: { 
     scale: 1.2, 
@@ -97,7 +90,6 @@ const iconVariants = {
     transition: { duration: 0.3 }
   }
 };
-
 function Profile() {
   const { user, logout } = useAuth();
   const [bookings, setBookings] = useState([]);
@@ -105,7 +97,6 @@ function Profile() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
-
   // Check if sidebar is open by listening to body class
   useEffect(() => {
     const checkSidebar = () => {
@@ -123,7 +114,6 @@ function Profile() {
       observer.disconnect();
     };
   }, []);
-
   useEffect(() => {
     if (user?.userId) {
       setLoading(true);
@@ -132,32 +122,19 @@ function Profile() {
         .finally(() => setLoading(false));
     }
   }, [user]);
-
   const handleBackClick = () => {
     navigate('/');
   };
-
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
   const handleViewAllBookings = () => {
     navigate('/order-history');
   };
-
-  const handleEditProfile = () => {
-    navigate('/edit-profile');
-  };
-
   const handleViewHotel = (hotelId) => {
     navigate(`/hotels/${hotelId}`);
   };
-
-  const handleBookingDetails = (bookingId) => {
-    navigate(`/booking-details/${bookingId}`);
-  };
-
   const getUserInitials = () => {
     if (user?.name) {
       const names = user.name.split(' ');
@@ -168,7 +145,6 @@ function Profile() {
     }
     return user?.email ? user.email.charAt(0) : 'U';
   };
-
   // Calculate member since date
   const getMemberSince = () => {
     if (user?.createdAt) {
@@ -177,7 +153,6 @@ function Profile() {
     }
     return 'Unknown';
   };
-
   // Get booking statistics
   const getBookingStats = () => {
     if (bookings.length === 0) return { total: 0, completed: 0, upcoming: 0, cancelled: 0 };
@@ -189,11 +164,8 @@ function Profile() {
       cancelled: bookings.filter(b => b.status === 'CANCELLED').length
     };
   };
-
   const bookingStats = getBookingStats();
-
   if (loading) return <Loader />;
-
   return (
     <motion.div
       initial="hidden"
@@ -245,7 +217,7 @@ function Profile() {
               <Box 
                 className="p-6 text-white"
                 sx={{ 
-                  background: 'linear-gradient(135deg, #d45cb0ff 0%, #fafafaff 100%)',
+                  background: 'linear-gradient(135deg, #22309aff 0%, #fafafaff 100%)',
                   position: 'relative',
                   overflow: 'hidden'
                 }}
@@ -280,8 +252,8 @@ function Profile() {
                     </Avatar>
                   </motion.div>
                   <div>
-                    <h3 className="text-2xl font-bold">Welcome, {user.name || user.username || 'User'}!</h3>
-                    <p className="text-red-100">Member since {getMemberSince()}</p>
+                    <h3 className="text-2xl font-bold">Welcome</h3>
+                    <p className="text-red-100">Thank you for being a member of OUR Hotels</p>
                   </div>
                 </div>
               </Box>
@@ -335,7 +307,7 @@ function Profile() {
                         border: '1px solid rgba(229, 57, 53, 0.1)'
                       }}
                     >
-                      <motion.div variants={iconVariants} whileHover="hover">
+                      {/* <motion.div variants={iconVariants} whileHover="hover">
                         <div className="bg-red-100 p-3 rounded-full mr-4">
                           <FaUser className="text-red-700" size={24} />
                         </div>
@@ -343,7 +315,7 @@ function Profile() {
                       <div>
                         <p className="text-sm text-gray-500">Full Name</p>
                         <p className="font-semibold text-gray-800">{user.name || user.username || 'UserName'}</p>
-                      </div>
+                      </div> */}
                     </motion.div>
                     
                     <motion.div 
@@ -377,7 +349,7 @@ function Profile() {
                         border: '1px solid rgba(229, 57, 53, 0.1)'
                       }}
                     >
-                      <motion.div variants={iconVariants} whileHover="hover">
+                      {/* <motion.div variants={iconVariants} whileHover="hover">
                         <div className="bg-red-100 p-3 rounded-full mr-4">
                           <FaPhone className="text-red-700" size={24} />
                         </div>
@@ -385,7 +357,7 @@ function Profile() {
                       <div>
                         <p className="text-sm text-gray-500">Phone Number</p>
                         <p className="font-semibold text-gray-800">{user.phone || 'N/A'}</p>
-                      </div>
+                      </div> */}
                     </motion.div>
                     
                     <motion.div 
@@ -411,21 +383,6 @@ function Profile() {
                 </Grid>
                 
                 <div className="mt-6 flex justify-end space-x-4">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<FaEdit />}
-                      onClick={handleEditProfile}
-                      className="flex items-center px-6 py-3 rounded-lg shadow-md transition"
-                      style={{ 
-                        borderColor: theme.palette.error.main,
-                        color: theme.palette.error.main
-                      }}
-                    >
-                      Edit Profile
-                    </Button>
-                  </motion.div>
-                  
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button
                       variant="contained"
@@ -592,18 +549,7 @@ function Profile() {
                             {booking.status}
                           </span>
                         </div>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleBookingDetails(booking.bookingId)}
-                          className="text-red-700 font-medium hover:text-red-800 px-3 py-1 rounded-lg"
-                          style={{ 
-                            background: 'rgba(229, 57, 53, 0.1)',
-                            border: '1px solid rgba(229, 57, 53, 0.2)'
-                          }}
-                        >
-                          View Details
-                        </motion.button>
+                        {/*  */}
                       </div>
                     </div>
                   </motion.div>
@@ -616,5 +562,4 @@ function Profile() {
     </motion.div>
   );
 }
-
 export default Profile;
